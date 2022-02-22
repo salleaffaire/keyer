@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "aligned.hpp"
 #include "keyer.hpp"
 #include "profiler.hpp"
 
@@ -15,22 +16,28 @@
 
 #define OUTPUT_IMAGE 0
 
-void fill4Pixels(uint8_t* bg, uint8_t* key, uint8_t* alpha) {
-  uint8_t bgs[16] = {128, 129, 130, 131, 132, 133, 240, 135,
-                     128, 128, 128, 128, 128, 128, 128, 128};
-  uint8_t keys[16] = {40,  40,  40,  40,  40,  40,  40,  40,
-                      255, 255, 255, 255, 255, 255, 255, 255};
-  uint8_t alphas[16] = {10, 10, 10, 10, 10, 10, 10, 10,
-                        50, 50, 50, 50, 50, 50, 50, 50};
+// This is for the purpose of testing
+// 8 pixels of RGBX - 2 loops with SSE2 and AXV_2
+//                  - 1 loop with AXV
+void fill8Pixels(uint8_t *bg, uint8_t *key, uint8_t *alpha) {
+  uint8_t bgs[32] = {128, 129, 130, 131, 132, 133, 240, 135, 128, 128, 128,
+                     128, 128, 128, 128, 128, 30,  40,  50,  60,  66,  0,
+                     64,  78,  23,  33,  44,  55,  66,  77,  88,  99};
+  uint8_t keys[32] = {40,  40,  40,  40,  40,  40,  40,  40,  255, 255, 255,
+                      255, 255, 255, 255, 255, 40,  40,  40,  40,  40,  40,
+                      40,  40,  255, 255, 255, 255, 255, 255, 255, 255};
+  uint8_t alphas[32] = {10, 10, 10, 10, 10, 10, 10, 10, 50, 50, 50,
+                        50, 50, 50, 50, 50, 10, 10, 10, 10, 10, 10,
+                        10, 10, 50, 50, 50, 50, 50, 50, 50, 50};
 
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 32; i++) {
     bg[i] = bgs[i];
     key[i] = keys[i];
     alpha[i] = alphas[i];
   }
 }
 
-void outputImage(uint8_t* bg, int width, int height) {
+void outputImage(uint8_t *bg, int width, int height) {
   for (int i = 0; i < height; i++) {
     for (int j = 0; j < width; j++) {
       std::cout << std::setw(3) << std::hex
@@ -46,88 +53,54 @@ void outputImage(uint8_t* bg, int width, int height) {
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   // Setup data
   // Allocating more memory than needed to align the pointer to a 32 byte
   // boundary.
   // ------------------------------------------------------------------------
-  uint8_t* bg = new uint8_t[_IMAGE_WIDTH * _IMAGE_HEIGHT * 4 + 32];
-  uint8_t* aligned_bg = (uint8_t*)(((uintptr_t)bg + 31) & ~(uintptr_t)0x1F);
+  Aligned<uint8_t> bg(_IMAGE_WIDTH * _IMAGE_HEIGHT * 4);
+  Aligned<uint8_t> bg_sse(_IMAGE_WIDTH * _IMAGE_HEIGHT * 4);
 
-  uint8_t* key = new uint8_t[_IMAGE_WIDTH * _IMAGE_HEIGHT * 4 + 32];
-  uint8_t* aligned_key = (uint8_t*)(((uintptr_t)key + 31) & ~(uintptr_t)0x1F);
+  Aligned<uint8_t> key(_IMAGE_WIDTH * _IMAGE_HEIGHT * 4);
 
-  uint8_t* alpha = new uint8_t[_IMAGE_WIDTH * _IMAGE_WIDTH * 4 + 32];
-  uint8_t* aligned_alpha =
-      (uint8_t*)(((uintptr_t)alpha + 31) & ~(uintptr_t)0x1F);
+  Aligned<uint8_t> alpha(_IMAGE_WIDTH * _IMAGE_HEIGHT * 4);
 
-  fill4Pixels(aligned_bg, aligned_key, aligned_alpha);
-  fill4Pixels(aligned_bg + 16, aligned_key + 16, aligned_alpha + 16);
-
-  uint8_t* bg_sse = new uint8_t[_IMAGE_WIDTH * _IMAGE_HEIGHT * 4 + 32];
-
-  uint8_t* aligned_bg_sse =
-      (uint8_t*)(((uintptr_t)bg_sse + 31) & ~(uintptr_t)0x1F);
-
-  fill4Pixels(aligned_bg_sse, aligned_key, aligned_alpha);
-  fill4Pixels(aligned_bg_sse + 16, aligned_key + 16, aligned_alpha + 16);
+  fill8Pixels(bg.geta(), key.geta(), alpha.geta());
+  fill8Pixels(bg_sse.geta(), key.geta(), alpha.geta());
 
 #if (OUTPUT_IMAGE == 1)
   std::cout << "Original image" << std::endl;
-  outputImage(aligned_bg, _IMAGE_WIDTH, _IMAGE_HEIGHT);
+  outputImage(bg.geta(), _IMAGE_WIDTH, _IMAGE_HEIGHT);
 #endif
 
   // Simple non intrinsic implementation
   // ------------------------------------------------------------------------
   // ------------------------------------------------------------------------
   uint64_t start = rdtsc();
-  apply_key(aligned_bg, aligned_key, aligned_alpha, _IMAGE_WIDTH,
-            _IMAGE_HEIGHT);
+  apply_key(bg.geta(), key.geta(), alpha.geta(), _IMAGE_WIDTH, _IMAGE_HEIGHT);
   uint64_t total = rdtsc() - start;
 
 #if (OUTPUT_IMAGE == 1)
   std::cout << "Keyed image" << std::endl;
-  outputImage(aligned_bg, _IMAGE_WIDTH, _IMAGE_HEIGHT);
+  outputImage(bg.geta(), _IMAGE_WIDTH, _IMAGE_HEIGHT);
 #endif
 
   std::cout << "Cycles :: " << total << std::endl;
-
-  double giga = 1000000000;
-  double fr = 4.0;
-  double sec_per_cycles = 1 / (giga * fr);
-  double execution_time = sec_per_cycles * total;
-
-  std::cout << sec_per_cycles << " seconds per cycles" << std::endl;
-  std::cout << execution_time << " execution time" << std::endl;
 
   // Intrinsic implementation
   // ------------------------------------------------------------------------
   // ------------------------------------------------------------------------
   start = rdtsc();
-  apply_key_avx(aligned_bg_sse, aligned_key, aligned_alpha, _IMAGE_WIDTH,
-                _IMAGE_HEIGHT);
+  apply_key_avx_2(bg_sse.geta(), key.geta(), alpha.geta(), _IMAGE_WIDTH,
+                  _IMAGE_HEIGHT);
   total = rdtsc() - start;
 
 #if (OUTPUT_IMAGE == 1)
   std::cout << "Keyed image" << std::endl;
-  outputImage(aligned_bg_sse, _IMAGE_WIDTH, _IMAGE_HEIGHT);
+  outputImage(bg_sse.geta(), _IMAGE_WIDTH, _IMAGE_HEIGHT);
 #endif
 
   std::cout << "Cycles :: " << total << std::endl;
-
-  giga = 1000000000;
-  fr = 4.0;
-  sec_per_cycles = 1 / (giga * fr);
-  execution_time = sec_per_cycles * total;
-
-  std::cout << sec_per_cycles << " seconds per cycles" << std::endl;
-  std::cout << execution_time << " execution time" << std::endl;
-
-  delete[] bg;
-  delete[] key;
-  delete[] alpha;
-
-  delete[] bg_sse;
 
   return 0;
 }
