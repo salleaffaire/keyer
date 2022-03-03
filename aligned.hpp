@@ -2,19 +2,20 @@
 #define _ALIGNED_HPP___
 
 #include <cstring>
+#include <iostream>
 #include <utility>
 
 template <typename T>
 class Aligned {
  private:
-  size_t mSize;
+  uint64_t mSize;
   T *mData;
   T *mAlignedData;
 
  public:
   Aligned() : mSize(0), mData(0) {}
 
-  Aligned(size_t size) : mSize(size) {
+  Aligned(uint64_t size) : mSize(size) {
     mData = new T[size + 32];
     mAlignedData = (T *)(((uintptr_t)mData + 31) & ~(uintptr_t)0x1F);
   }
@@ -45,6 +46,7 @@ class Aligned {
 
   // Accessor
   T *geta() { return mAlignedData; }
+  T *getb() { return mData; }
 };
 
 #endif

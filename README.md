@@ -17,6 +17,38 @@ x = _mm256_castps_si256(
     );
 ```
 
+## Switching between g++/gcc versions on Ubuntu 20.04
+
+Because the Cuda C compiler only supports g++ 8.4 or lower and 20.04 comes with 9.3.0 by default,
+this trick below is useful to go down a version while keeping your current version installed.
+
+[Handling multiple compiler versions](https://www.fosslinux.com/39386/how-to-install-multiple-versions-of-gcc-and-g-on-ubuntu-20-04.htm)
+
+Install multiple
+
+```bash
+sudo apt install build-essential
+sudo apt -y install gcc-7 g++-7 gcc-8 g++-8 gcc-9 g++-9
+```
+
+Register versions
+
+```bash
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 8
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 8
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+```
+
+Switch
+
+```bash
+sudo update-alternatives --config gcc
+sudo update-alternatives --config g++
+```
+
 ## AVX Implementation
 
 ```c++
