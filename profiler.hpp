@@ -1,3 +1,6 @@
+#ifndef __PROFILER_HPP___
+#define __PROFILER_HPP___
+
 #include <x86intrin.h>
 
 #include <chrono>
@@ -36,3 +39,5 @@ void __PROFILE(std::function<void()> f, bool type = true) {
     std::cout << finish - start << " ticks." << std::endl;
   }
 }
+
+#endif
