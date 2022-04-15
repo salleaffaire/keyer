@@ -2,19 +2,20 @@
 
 ## Compiling
 
+Compile with the simple command,
+
 ```bash
 g++ main.cpp -std=c++17 -mavx -mavx2 -O3 -o main
 ```
 
-SWAP hi/low 128-bit
+## Git submodules
 
-```c++
-x = _mm256_castps_si256(
-       _mm256_permute2f128_ps(
-         _mm256_castsi256_ps(x), 
-         _mm256_castsi256_ps(x), 
-         1)
-    );
+This project has a dependency on [STB](https://github.com/nothings/stb) that we manage with git submodules.
+
+Created by,
+
+```bash
+git submodule add https://github.com/nothings/stb.git
 ```
 
 ## Switching between g++/gcc versions on Ubuntu 20.04
@@ -47,6 +48,19 @@ Switch
 ```bash
 sudo update-alternatives --config gcc
 sudo update-alternatives --config g++
+```
+
+##
+
+SWAP hi/low 128-bit
+
+```c++
+x = _mm256_castps_si256(
+       _mm256_permute2f128_ps(
+         _mm256_castsi256_ps(x), 
+         _mm256_castsi256_ps(x), 
+         1)
+    );
 ```
 
 ## AVX Implementation
