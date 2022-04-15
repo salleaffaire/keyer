@@ -32,9 +32,9 @@ int main(int argc, char *argv[]) {
   int bgBpp;
 
   // Read all images
-  std::string alpha_fn = "alpha.png";
-  std::string key_fn = "key.png";
-  std::string background_fn = "background.png";
+  std::string alpha_fn = "images/alpha.png";
+  std::string key_fn = "images/key.png";
+  std::string background_fn = "images/background.png";
 
   // Load images: alpha, key and background
   // ------------------------------------------------------------------------
