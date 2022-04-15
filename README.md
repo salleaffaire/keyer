@@ -1,13 +1,5 @@
 # Keyer implementation - Pure C vs. SIMD (SSE, AVX, AVX2)
 
-## Compiling
-
-Compile with the simple command,
-
-```bash
-g++ main.cpp -std=c++17 -mavx -mavx2 -O3 -o main
-```
-
 ## Git submodules
 
 This project has a dependency on [STB](https://github.com/nothings/stb) that we manage with git submodules.
@@ -16,6 +8,22 @@ Created by,
 
 ```bash
 git submodule add https://github.com/nothings/stb.git
+```
+
+Clone with submodules,
+
+```bash
+git clone git@github.com:salleaffaire/keyer.git
+git submodule init
+git submodule update
+```
+
+## Compiling
+
+Compile with the simple command,
+
+```bash
+g++ main.cpp -std=c++17 -mavx -mavx2 -O3 -o main
 ```
 
 ## Switching between g++/gcc versions on Ubuntu 20.04
