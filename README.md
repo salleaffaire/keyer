@@ -1,5 +1,7 @@
 # Keyer implementation - Pure C vs. SIMD (SSE, AVX, AVX2)
 
+Intrinsics [documentation](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html) is at that link.
+
 ## Git submodules
 
 This project has a dependency on [STB](https://github.com/nothings/stb) that we manage with git submodules.
@@ -58,7 +60,7 @@ sudo update-alternatives --config gcc
 sudo update-alternatives --config g++
 ```
 
-##
+## Misc
 
 SWAP hi/low 128-bit
 
