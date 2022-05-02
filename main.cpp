@@ -20,7 +20,17 @@
 
 void function() { std::cout << "DO YOU SEE THIS!!!" << std::endl; }
 
+// #define DEBUG
+#ifdef DEBUG
+#include "debug.hpp"
+#endif
+
 int main(int argc, char *argv[]) {
+
+#ifdef DEBUG
+  debug();
+#else
+
   int alphaWidth;
   int alphaHeight;
   int alphaBpp;
@@ -106,12 +116,14 @@ int main(int argc, char *argv[]) {
   // ------------------------------------------------------------------------
   __PROFILE(
       [&]() {
-        apply_key_avx_2(bg_sse.geta(), key.geta(), alpha.geta(), width, height);
+        apply_key_avx(bg_sse.geta(), key.geta(), alpha.geta(), width, height);
       },
       bool(PROFILE_IN_TIME));
 
   stbi_write_png("result-simple.png", width, height, 4, bg.geta(), 0);
   stbi_write_png("result-sse.png", width, height, 4, bg_sse.geta(), 0);
+
+#endif
 
   return 0;
 }

@@ -87,7 +87,7 @@ void apply_key_sse2(uint8_t *bg, uint8_t *key, uint8_t *alpha, int width,
     // Pack the data back
     __m128i result = _mm_packus_epi16(curBgGroup16Lo, curBgGroup16Hi);
 
-    _mm_store_si128((__m128i *)(&bg[i * pixel_group]), result);
+    _mm_store_si128((__m128i *)(&bg[i * pixel_size]), result);
   }
 }
 
@@ -106,11 +106,11 @@ void apply_key_avx(uint8_t *bg, uint8_t *key, uint8_t *alpha, int width,
         _mm256_set_epi32(0x00FF00FF, 0x00FF00FF, 0x00FF00FF, 0x00FF00FF,
                          0x00FF00FF, 0x00FF00FF, 0x00FF00FF, 0x00FF00FF);
     __m256i curBgGroup =
-        *(__m256i *)(&bg[i * pixel_size]);  // Load 4 Background pixels
+        *(__m256i *)(&bg[i * pixel_size]);  // Load 8 Background pixels
     __m256i curKeyGroup =
-        *(__m256i *)(&key[i * pixel_size]);  // Load 4 Key pixels
+        *(__m256i *)(&key[i * pixel_size]);  // Load 8 Key pixels
     __m256i curAlphaGroup =
-        *(__m256i *)(&alpha[i * pixel_size]);  // Load 4 Alpha pixels
+        *(__m256i *)(&alpha[i * pixel_size]);  // Load 8 Alpha pixels
 
     // Convert to 16-bit
     __m256i curBgGroup16Lo = _mm256_unpacklo_epi8(curBgGroup, zero);
@@ -143,7 +143,7 @@ void apply_key_avx(uint8_t *bg, uint8_t *key, uint8_t *alpha, int width,
     // Pack the data back
     __m256i result = _mm256_packus_epi16(curBgGroup16Lo, curBgGroup16Hi);
 
-    _mm256_store_si256((__m256i *)(&bg[i * pixel_group]), result);
+    _mm256_store_si256((__m256i *)(&bg[i * pixel_size]), result);
   }
 }
 
@@ -199,7 +199,7 @@ void apply_key_avx_2(uint8_t *bg, uint8_t *key, uint8_t *alpha, int width,
 
     __m128i result8 = _mm256_castsi256_si128(result);
 
-    _mm_store_si128((__m128i *)(&bg[i * pixel_group]), result8);
+    _mm_store_si128((__m128i *)(&bg[i * pixel_size]), result8);
   }
 }
 
