@@ -75,9 +75,40 @@ x = _mm256_castps_si256(
 
 ## AVX Implementation
 
+From `debug.cpp`, `bgdata`:
+
 ```c++
-//  Original image
+//   
+//  00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+// 
 // |-----------------------|                       |-----------------------|                         <-- curBgGroup16Lo
 //                         |-----------------------|                       |-----------------------| <-- curBgGroup16Hi
-//  80 81 82 83 84 85 f0 87 80 80 80 80 80 80 80 80 1e 28 32 3c 42 00 40 4e 17 21 2c 37 42 4d 58 63
+//  00 01 02 FF 10 11 12 FF 20 21 22 FF 30 31 32 FF 40 41 42 FF 50 51 52 FF 60 61 62 FF 70 71 72 FF  <-- curBgGroup
+//  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  <-- zero
+
+// 00 00 01 00 ...                                                                                   <-- curBgGroup16Lo
+// 20 00 21 00 ...                                                                                   <-- curBgGroup16Hi 
+
+```
+
+## Divide by 255
+
+For any integer number in the range of [0, 65536], there is a faster way to calculate x/255:
+
+```c++
+#define div_255_fast(x)    (((x) + (((x) + 257) >> 8)) >> 8)
+```
+
+It is twice as faster as x/255:
+
+[Quick C++ Benchmark](http://quick-bench.com/t3Y2-b4isYIwnKwMaPQi3n9dmtQ)
+
+And the SIMD version:
+
+```c++
+// (x + ((x + 257) >> 8)) >> 8
+static inline __m128i _mm_fast_div_255_epu16(__m128i x) {
+    return _mm_srli_epi16(_mm_adds_epu16(x, 
+        _mm_srli_epi16(_mm_adds_epu16(x, _mm_set1_epi16(0x0101)), 8)), 8);
+}
 ```
